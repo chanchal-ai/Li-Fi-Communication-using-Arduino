@@ -1,0 +1,70 @@
+
+
+const int SENSOR_PIN = A0;             
+const unsigned int BIT_DURATION_US = 2000;
+int lightThreshold = 600;             
+
+void setup() {
+  Serial.begin(9600);
+  delay(2000); 
+  calibrateThreshold();
+  Serial.print("Calibrated threshold = ");
+  Serial.println(lightThreshold);
+}
+
+void loop() {
+  
+  int received = receiveByteFromLight();
+  if (received >= 0) {
+    char c = (char)received;
+    Serial.print(c);        
+  }
+}
+
+
+void calibrateThreshold() {
+  long sum = 0;
+  const int samples = 50;
+  for (int i = 0; i < samples; i++) {
+    sum += analogRead(SENSOR_PIN);
+    delay(10);
+  }
+  int ambient = sum / samples;
+  // Threshold thoda ambient se upar rakho
+  lightThreshold = ambient + 50; // Adjust margin (20–100) as per your setup
+}
+
+
+bool readLightLevel() {
+  int value = analogRead(SENSOR_PIN);
+  // Debug (optional): Serial.println(value);
+  return (value > lightThreshold); // true = "light ON", false = "light OFF"
+}
+
+
+int receiveByteFromLight() {
+  
+  while (readLightLevel() == true) {
+    // waiting for LED to go OFF → start bit
+  }
+
+  // Now we are at the edge of start bit.
+  // Wait 1.5 bit durations to sample at center of first data bit
+  delayMicroseconds(BIT_DURATION_US + BIT_DURATION_US / 2);
+
+  uint8_t result = 0;
+
+  // ---- Read 8 data bits (LSB first) ----
+  for (int i = 0; i < 8; i++) {
+    bool bitVal = readLightLevel();
+    if (bitVal) {
+      result |= (1 << i);
+    }
+    delayMicroseconds(BIT_DURATION_US);
+  }
+
+  // ---- Read stop bit (optional, just wait) ----
+  delayMicroseconds(BIT_DURATION_US);
+
+  return (int)result;
+}
