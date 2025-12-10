@@ -1,0 +1,52 @@
+// Li-Fi Transmitter - Arduino
+// Components: Arduino, high power SMD LED + series resistor + transistor (recommended)
+
+const int LED_PIN = 9;          
+const unsigned int BIT_DURATION_US = 2000; 
+void setup() {
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH);  
+  Serial.begin(9600);           
+}
+
+void loop() {
+  
+  static const char message[] = "Hello from Li-Fi!\n";
+  static bool sendOnceFromSerial = false;
+
+  
+  if (Serial.available() > 0) {
+    char c = Serial.read();
+    sendByteOverLight((uint8_t)c);
+  }
+
+  
+  /*
+  for (size_t i = 0; message[i] != '\0'; i++) {
+    sendByteOverLight((uint8_t)message[i]);
+  }
+  delay(1000);
+  */
+}
+
+
+void sendByteOverLight(uint8_t b) {
+  // ---- Start bit: LOW (LED OFF) ----
+  digitalWrite(LED_PIN, LOW);
+  delayMicroseconds(BIT_DURATION_US);
+
+  // ---- Data bits: LSB first ----
+  for (int i = 0; i < 8; i++) {
+    if (b & 0x01) {
+      digitalWrite(LED_PIN, HIGH); // bit = 1
+    } else {
+      digitalWrite(LED_PIN, LOW);  // bit = 0
+    }
+    delayMicroseconds(BIT_DURATION_US);
+    b >>= 1;
+  }
+
+  // ---- Stop bit: HIGH (LED ON) ----
+  digitalWrite(LED_PIN, HIGH);
+  delayMicroseconds(BIT_DURATION_US);
+}
