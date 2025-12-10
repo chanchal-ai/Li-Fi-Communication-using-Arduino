@@ -1,0 +1,1 @@
+Developed a Li-Fi data transmission module by integrating Arduino microcontrollers, high-power SMD LED, 220-ohm driver resistor, regulated power supply, and photodiode-based receiver. Implemented OOK modulation, noise filtering, and end-to-end optical communication on a custom breadboard setup.
